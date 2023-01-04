@@ -77,8 +77,7 @@ def main():
         logger.info(f"status_codes = {status_codes}")
         if all(c != 200 for c in status_codes):
             messages.append(
-                f"* <a href='{url}'>{site}</a> request failed in all {args.retry_count} retries, "
-                f"status_codes: {', '.join(status_codes)}"
+                f"* <a href='{url}'>{site}</a> request failed in all {args.retry_count} retries, status_codes: {status_codes}"
             )
 
     logger.info(f"messages -> {messages}")
