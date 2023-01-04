@@ -43,7 +43,8 @@ def mt_takelogin(config_contents:dict):
     except httpx.HTTPError as exc:
         logger.warning(f"HTTP Exception for {exc.request.url} - {exc}")
 
-    if resp.status_code in [301, 302]:
+    logger.info(f"resp = {resp}")
+    if resp.status_code in [200, 301, 302]:
         cookies = {"tp": resp.cookies.get("tp")}
     else:
         cookies = {"tp": ""}
@@ -110,7 +111,7 @@ def main():
                 f"* <a href='{url}'>{site}</a> request failed in all {args.retry_count} retries, status_codes: {status_codes}"
             )
 
-    logger.info(f"messages -> {messages}")
+    logger.info(f"messages = {messages}")
     bot_send_message(bot_token, chat_id, "\n".join(messages))
 
 
