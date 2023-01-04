@@ -9,18 +9,22 @@ from pathlib import Path
 
 import bencodepy
 
+
 def init_logger(name, level=logging.WARNING):
     format = "[%(asctime)s][%(levelname) 7s] %(name)s: %(message)s"
     logging.basicConfig(format=format, level=level, stream=sys.stderr)
 
     return logging.getLogger(name)
 
+
 logger = init_logger("torrent-name-restore", logging.INFO)
+
 
 def get_torrent_files(torrent):
     torrent_dict = bencodepy.bread(torrent)
     torrent_name = torrent_dict[b'info'][b'name'].decode()
-    def joinpath(path:list):
+
+    def joinpath(path: list):
         return os.path.sep.join([p.decode() for p in path])
 
     torrent_files = []
@@ -31,7 +35,8 @@ def get_torrent_files(torrent):
 
     return torrent_name, torrent_files
 
-def match_torrent_files(torrent, base_dir:Path):
+
+def match_torrent_files(torrent, base_dir: Path):
     torrent_name, torrent_files = get_torrent_files(torrent)
 
     for root, _, files in os.walk(base_dir):
@@ -47,7 +52,8 @@ def match_torrent_files(torrent, base_dir:Path):
 
     return torrent_name, torrent_files
 
-def rename_torrent_files(torrent, base_dir:Path, dry_run):
+
+def rename_torrent_files(torrent, base_dir: Path, dry_run):
     base_dir = base_dir if isinstance(base_dir, Path) else Path(base_dir)
     torrent_name, torrent_files = match_torrent_files(torrent, base_dir)
     torrent_dir = base_dir.parent / torrent_name
@@ -59,7 +65,8 @@ def rename_torrent_files(torrent, base_dir:Path, dry_run):
             skipped_torrent_files.append(file)
             continue
         if len(file["matched_path"]) > 1:
-            logger.warning(f"{file['path']} has multiple matches {file['matched_path']}")
+            logger.warning(
+                f"{file['path']} has multiple matches {file['matched_path']}")
             skipped_torrent_files.append(file)
             continue
 
@@ -70,7 +77,7 @@ def rename_torrent_files(torrent, base_dir:Path, dry_run):
             if not dry_run:
                 os.makedirs(dest.parent)
         else:
-                logger.debug(f"os.makedirs('{dest.parent}')")
+            logger.debug(f"os.makedirs('{dest.parent}')")
 
         if not dest.is_file():
             if not dry_run:
@@ -83,18 +90,25 @@ def rename_torrent_files(torrent, base_dir:Path, dry_run):
 
     return skipped_torrent_files
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-t", "--torrent", required=True, help="torrent file to read")
-    parser.add_argument("-b", "--base-dir", required=True, help="base_dir for altered torrent_files")
-    parser.add_argument("--dry-run", default=False, action="store_true", help="dry run mode, preview files to rename")
+    parser.add_argument("-t", "--torrent", required=True,
+                        help="torrent file to read")
+    parser.add_argument("-b", "--base-dir", required=True,
+                        help="base_dir for altered torrent_files")
+    parser.add_argument("--dry-run", default=False, action="store_true",
+                        help="dry run mode, preview files to rename")
 
     return parser.parse_args()
+
 
 if __name__ == "__main__":
     args = parse_args()
 
-    skipped_torrent_files = rename_torrent_files(args.torrent, args.base_dir, args.dry_run)
+    skipped_torrent_files = rename_torrent_files(
+        args.torrent, args.base_dir, args.dry_run)
 
-    logger.warning("skipped_torrent_files = " + json.dumps(skipped_torrent_files, ensure_ascii=False))
+    logger.warning("skipped_torrent_files = " +
+                   json.dumps(skipped_torrent_files, ensure_ascii=False))
