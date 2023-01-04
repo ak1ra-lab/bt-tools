@@ -98,7 +98,7 @@ def main():
                 cookies = mt_takelogin(config_contents)
                 # 把重新获取的 cookies 写入配置文件 pt-login.json 中
                 config_contents["sites"]["kp.m-team.cc"]["cookies"].update(cookies)
-                with open(config, "w") as fp:
+                with open(config.expanduser(), "w") as fp:
                     fp.write(json.dumps(config_contents, indent=4, ensure_ascii=False))
 
         logger.info(f"status_codes = {status_codes}")
