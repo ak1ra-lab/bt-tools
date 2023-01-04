@@ -1,0 +1,27 @@
+{
+    "chat_id": "<chat_id>",
+    "bot_token": "<bot_token>",
+    "headers": {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
+    },
+    "sites": {
+        "u2.dmhy.org": {
+            "url": "https://u2.dmhy.org/torrents.php",
+            "cookies": {
+                "nexusphp_u2": "<*nexusphp_u2* value in u2.dmhy.org cookies>"
+            }
+        },
+        "jpopsuki.eu": {
+            "url": "https://jpopsuki.eu/torrents.php",
+            "cookies": {
+                "keeplogged": "<*keeplogged* value in jpopsuki.eu cookies>"
+            }
+        },
+        "kp.m-team.cc": {
+            "url": "https://kp.m-team.cc/torrents.php",
+            "cookies": {
+                "tp": "<*tp* value in kp.m-team.cc cookies>"
+            }
+        }
+    }
+}
