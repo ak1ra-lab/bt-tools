@@ -21,6 +21,14 @@
             "url": "https://kp.m-team.cc/torrents.php",
             "cookies": {
                 "tp": "<*tp* value in kp.m-team.cc cookies>"
+            },
+            "takelogin": {
+                "url": "https://kp.m-team.cc/takelogin.php",
+                "data": {
+                    "username": "<*username* of kp.m-team.cc>",
+                    "password": "<*password* of kp.m-team.cc>",
+                    "returnto": "/torrents.php"
+                }
             }
         }
     }
