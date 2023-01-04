@@ -1,9 +1,6 @@
 {
     "chat_id": "<chat_id>",
     "bot_token": "<bot_token>",
-    "headers": {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
-    },
     "sites": {
         "u2.dmhy.org": {
             "url": "https://u2.dmhy.org/torrents.php",
@@ -22,14 +19,12 @@
             "cookies": {
                 "tp": "<*tp* value in kp.m-team.cc cookies>"
             },
-            "takelogin": {
-                "url": "https://kp.m-team.cc/takelogin.php",
-                "data": {
-                    "username": "<*username* of kp.m-team.cc>",
-                    "password": "<*password* of kp.m-team.cc>",
-                    "returnto": "/torrents.php"
-                }
-            }
+            "credentials": {
+                "username": "<*username* for kp.m-team.cc>",
+                "password": "<*password* for kp.m-team.cc>"
+            },
+            "login": "/login.php",
+            "takelogin": "/takelogin.php"
         }
     }
 }
