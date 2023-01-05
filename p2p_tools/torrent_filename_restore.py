@@ -4,56 +4,37 @@ import argparse
 import os
 import json
 import logging
-import sys
 from pathlib import Path
 
-import bencodepy
+from p2p_tools.utils import (
+    init_logger,
+    read_torrent,
+    get_torrent_files
+)
 
 
-def init_logger(name, level=logging.WARNING):
-    format = "[%(asctime)s][%(levelname) 7s] %(name)s: %(message)s"
-    logging.basicConfig(format=format, level=level, stream=sys.stderr)
-
-    return logging.getLogger(name)
+logger = init_logger("p2p_tools.torrent_filename_restore", logging.INFO)
 
 
-logger = init_logger("p2p_tools.torrent_files_restore", logging.INFO)
-
-
-def get_torrent_files(torrent):
-    torrent_dict = bencodepy.bread(torrent)
-    torrent_name = torrent_dict[b'info'][b'name'].decode()
-
-    def joinpath(path: list):
-        return os.path.sep.join([p.decode() for p in path])
-
-    torrent_files = []
-    for file in torrent_dict[b'info'][b'files']:
-        torrent_files.append(
-            {"length": file[b"length"], "path": joinpath(file[b"path"])}
-        )
-
-    return torrent_name, torrent_files
-
-
-def match_torrent_files(torrent, base_dir: Path):
-    torrent_name, torrent_files = get_torrent_files(torrent)
+def match_torrent_files(torrent: Path, base_dir: Path):
+    torrent_name, torrent_dict = read_torrent(torrent)
+    _, torrent_files = get_torrent_files(torrent_name, torrent_dict)
 
     for root, _, files in os.walk(base_dir):
         root = root if isinstance(root, Path) else Path(root)
         for file in files:
-            length = (root / file).stat().st_size
+            file = (root / file).expanduser()
             for torrent_file in torrent_files:
-                if not length == torrent_file["length"]:
+                if not file.stat().st_size == torrent_file["length"]:
                     continue
                 if not "matched_path" in torrent_file.keys():
                     torrent_file["matched_path"] = []
-                torrent_file["matched_path"].append(file)
+                torrent_file["matched_path"].append(str(file))
 
     return torrent_name, torrent_files
 
 
-def rename_torrent_files(torrent, base_dir: Path, dry_run):
+def rename_torrent_files(torrent: Path, base_dir: Path, dry_run):
     base_dir = base_dir if isinstance(base_dir, Path) else Path(base_dir)
     torrent_name, torrent_files = match_torrent_files(torrent, base_dir)
     torrent_dir = base_dir.parent / torrent_name

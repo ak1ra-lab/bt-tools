@@ -4,19 +4,13 @@ import argparse
 import json
 import logging
 import os
-import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
-import bencodepy
-from bencodepy.exceptions import BencodeDecodeError
-
-
-def init_logger(name, level=logging.WARNING):
-    format = "[%(asctime)s][%(levelname) 7s] %(name)s: %(message)s"
-    logging.basicConfig(format=format, level=level, stream=sys.stderr)
-
-    return logging.getLogger(name)
+from p2p_tools.utils import (
+    init_logger,
+    read_torrent
+)
 
 
 logger = init_logger("p2p_tools.torrent_relocate", logging.INFO)
@@ -31,40 +25,27 @@ def find_torrents(base_dir: Path, public: bool):
                 continue
             file = (root / file).expanduser()
 
-            try:
-                torrent = bencodepy.bread(file)
-            except BencodeDecodeError as exc:
-                logger.warning(f"file = {file} - {exc}")
+            torrent_name, torrent_dict = read_torrent(file)
+            if not torrent_dict:
                 continue
 
-            announce = torrent.get(b"announce", b"")
-            if not announce:
-                logger.warning(f"announce empty: file = {file}")
-                continue
-
+            announce = torrent_dict.get(b"announce", b"").decode()
             logger.debug(f"file = {file}, announce = {announce}")
-            announce_parsed = urlparse(announce.decode())
-            netloc = announce_parsed.netloc.split(":")[0]
+            if not announce:
+                logger.warning(f"file = {file} announce empty, skip...")
+                continue
 
-            torrent_type = "private" if torrent[b"info"].get(
-                b"private", 0) else "public"
-
+            torrent_type = "private" \
+                if torrent_dict[b"info"].get(b"private", 0) else "public"
+            netloc = urlparse(announce).netloc.split(":")[0]
             if not netloc in torrents_grouped[torrent_type].keys():
                 torrents_grouped[torrent_type][netloc] = []
 
-            try:
-                name = torrent[b"info"][b"name"].decode()
-            except UnicodeDecodeError:
-                try:
-                    # 不知道有些种子中 name.utf-8 这个 key 是否符合 spec, 还是说是某些 client 的私有行为?
-                    name = torrent[b"info"][b"name.utf-8"].decode()
-                except KeyError as exc:
-                    logger.warning(f"file = {file} - {exc}")
-                    name = ""
-
             torrents_grouped[torrent_type][netloc].append(
-                {"scheme": announce_parsed.scheme,
-                    "name": name, "file": str(file)}
+                {
+                    "scheme": urlparse(announce).scheme,
+                    "name": torrent_name, "file": file
+                }
             )
 
     return torrents_grouped.pop("public") if public else torrents_grouped.pop("private")
@@ -77,13 +58,16 @@ def relocate_torrents(base_dir: Path, public: bool, dry_run: bool):
     skipped_files = []
     for netloc, torrents in torrents_grouped.items():
         for torrent in torrents:
-            src = Path(torrent["file"])
+            src = torrent["file"] \
+                if isinstance(torrent["file"], Path) else Path(torrent["file"])
             if public:
-                dest_dir = base_dir / torrent["scheme"]
+                dest_dir = base_dir.parent / \
+                    f"{base_dir.name}.public" / torrent["scheme"]
             else:
                 dest_dir = base_dir.parent / \
-                    f"{base_dir.name}.pt" / torrent["scheme"] / netloc
-            dest = dest_dir / src.name
+                    f"{base_dir.name}.private" / torrent["scheme"] / netloc
+            dest = dest_dir / \
+                (torrent["name"] if torrent["name"] else src.name)
 
             if not dest_dir.is_dir():
                 if dry_run:

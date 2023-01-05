@@ -3,33 +3,18 @@
 import argparse
 import json
 import logging
-import sys
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
-
-
-def init_logger(name, level=logging.WARNING):
-    format = "[%(asctime)s][%(levelname) 7s] %(name)s: %(message)s"
-    logging.basicConfig(format=format, level=level, stream=sys.stderr)
-
-    return logging.getLogger(name)
+from p2p_tools.utils import (
+    init_logger,
+    bot_send_message
+)
 
 
 logger = init_logger("p2p_tools.pt_login", logging.DEBUG)
-
-
-def bot_send_message(bot_token, chat_id, message):
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    data = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "HTML"
-    }
-
-    httpx.post(url, data=data)
 
 
 def get_cookie_by_name(cookies, name):
@@ -47,7 +32,7 @@ def takelogin(site_config, cookies, headers, retry_count=3):
         try:
             logger.debug(f"httpx.post('{url_takelogin}', data={credentials})")
             response = httpx.post(url_takelogin, data=credentials,
-                                cookies=cookies, headers=headers)
+                                  cookies=cookies, headers=headers)
         except httpx.HTTPError as exc:
             logger.warning(f"HTTP Exception for {exc.request.url} - {exc}")
             continue
@@ -87,22 +72,26 @@ def pt_request(site_config, headers, args):
                 f"response = {response}, location = {response.headers.get('location')}")
 
             cookies_takelogin = {}
-            cf_clearance_value = get_cookie_by_name(response.cookies, "cf_clearance")
+            cf_clearance_value = get_cookie_by_name(
+                response.cookies, "cf_clearance")
             if cf_clearance_value:
-                logger.debug(f"response = {response}, cf_clearance = {cf_clearance_value}")
+                logger.debug(
+                    f"response = {response}, cf_clearance = {cf_clearance_value}")
                 cookies_takelogin.update({"cf_clearance": cf_clearance_value})
 
             cookies, _ = takelogin(site_config, cookies=cookies_takelogin,
-                headers=headers, retry_count=args.retry_count)
+                                   headers=headers, retry_count=args.retry_count)
             logger.debug(f"takelogin returned cookies = {cookies}")
 
             if cookies.get("tp"):
                 # 把重新获取的 cookies 写入配置文件 pt-login.json 中
                 with open(config.expanduser(), "r") as fp:
                     config_contents = json.loads(fp.read())
-                config_contents["sites"][urlparse(url).netloc]["cookies"].update(cookies)
+                config_contents["sites"][urlparse(
+                    url).netloc]["cookies"].update(cookies)
                 with open(config.expanduser(), "w") as fp:
-                    fp.write(json.dumps(config_contents, indent=4, ensure_ascii=False))
+                    fp.write(json.dumps(config_contents,
+                             indent=4, ensure_ascii=False))
             else:
                 logger.warning(f"response = {response} takelogin failed")
                 break
