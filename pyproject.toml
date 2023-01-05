@@ -53,7 +53,8 @@ Source = "https://github.com/ak1ra-lab/p2p-tools"
 
 [project.scripts]
 pt-login = "p2p_tools.pt_login:main"
-torrent-files-restore = "p2p_tools.torrent_files_restore:main"
+torrent-filename-restore = "p2p_tools.torrent_filename_restore:main"
+torrent-relocate = "p2p_tools.torrent_relocate:main"
 
 [tool.black]
 line-length = 120

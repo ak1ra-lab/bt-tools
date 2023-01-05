@@ -17,7 +17,7 @@ def init_logger(name, level=logging.WARNING):
     return logging.getLogger(name)
 
 
-logger = init_logger("torrent-name-restore", logging.INFO)
+logger = init_logger("p2p_tools.torrent_files_restore", logging.INFO)
 
 
 def get_torrent_files(torrent):
@@ -58,37 +58,39 @@ def rename_torrent_files(torrent, base_dir: Path, dry_run):
     torrent_name, torrent_files = match_torrent_files(torrent, base_dir)
     torrent_dir = base_dir.parent / torrent_name
 
-    skipped_torrent_files = []
+    skipped_files = []
     for file in torrent_files:
         if not "matched_path" in file.keys():
             logger.warning(f"{file['path']} has no match")
-            skipped_torrent_files.append(file)
+            skipped_files.append(file)
             continue
         if len(file["matched_path"]) > 1:
             logger.warning(
                 f"{file['path']} has multiple matches {file['matched_path']}")
-            skipped_torrent_files.append(file)
+            skipped_files.append(file)
             continue
 
         src = base_dir / file["matched_path"][0]
         dest = torrent_dir / file["path"]
 
         if not dest.parent.is_dir():
-            if not dry_run:
-                os.makedirs(dest.parent)
-        else:
-            logger.debug(f"os.makedirs('{dest.parent}')")
-
-        if not dest.is_file():
-            if not dry_run:
-                os.rename(src, dest)
+            if dry_run:
+                logger.debug(f"os.makedirs('{dest.parent}')")
             else:
-                logger.info(f"os.rename('{src}', '{dest}')")
-        else:
-            logger.warning(f"{dest} exists, skip...")
-            skipped_torrent_files.append(file)
+                os.makedirs(dest.parent)
 
-    return skipped_torrent_files
+        if dest.is_file():
+            logger.warning(f"{dest} exists, skip...")
+            skipped_files.append(file)
+            continue
+
+        if dry_run:
+            logger.debug(f"os.rename('{src}', '{dest}')")
+            continue
+
+        os.rename(src, dest)
+
+    return skipped_files
 
 
 def parse_args():
@@ -107,11 +109,11 @@ def parse_args():
 def main():
     args = parse_args()
 
-    skipped_torrent_files = rename_torrent_files(
+    skipped_files = rename_torrent_files(
         args.torrent, args.base_dir, args.dry_run)
 
-    logger.warning("skipped_torrent_files = " +
-                   json.dumps(skipped_torrent_files, ensure_ascii=False))
+    logger.warning("skipped_files = " +
+                   json.dumps(skipped_files, ensure_ascii=False))
 
 
 if __name__ == "__main__":

@@ -35,15 +35,25 @@ pip3 install .
 而 [U2](https://u2.dmhy.org) 和 [Jpopsuki](https://jpopsuki.eu) 在登录时有验证码, 不过他们提供的
 cookies 有效期相当长, 而验证码处理起来会麻烦些, 这里就先不做了, 在登录失败时可能需要手动更新下配置文件中的 cookies 相关值.
 
-## [torrent-files-restore](p2p_tools/torrent_files_restore.py)
+使用 `--help` 选项查看帮助信息: `pt-login --help`
+
+## [torrent-filename-restore](p2p_tools/torrent_filename_restore.py)
 
 用于实现一个非常"小众"的需求, 对某个文件名被改乱的 Torrent 任务保存目录, 将其中的文件名还原为 .torrent 文件中结构.
 
 > 因为 .torrent 文件只记录了每个文件的 大小 (length),
 > 因此在尝试匹配时可能会出现某个文件被匹配多次, 对于这种情况会跳过对该文件的重命名.
 
-使用 `--help` 选项查看帮助信息:
-`/path/to/p2p-tools/.venv/bin/torrent-files-restore --help`
+使用 `--help` 选项查看帮助信息: `torrent-filename-restore --help`
+
+## [torrent-relocate](p2p_tools/torrent_relocate.py)
+
+用于对某个目录下的 .torrent 文件分类,
+
+* 对 public tracker 的种子按 `announce scheme` 分组
+* 对 private tracker 的种子移动到另一个目录(`${base_dir}.pt`), 并按 `announce scheme`/`announce netloc` 分组
+
+使用 `--help` 选项查看帮助信息: `torrent-relocate --help`
 
 ## See Also
 
