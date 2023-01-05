@@ -104,7 +104,7 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
     args = parse_args()
 
     skipped_torrent_files = rename_torrent_files(
@@ -112,3 +112,7 @@ if __name__ == "__main__":
 
     logger.warning("skipped_torrent_files = " +
                    json.dumps(skipped_torrent_files, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

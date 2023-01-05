@@ -1,3 +1,0 @@
-qbittorrent-api
-bencode.py
-httpx
