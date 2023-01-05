@@ -66,8 +66,8 @@ def relocate_torrents(base_dir: Path, public: bool, dry_run: bool):
             else:
                 dest_dir = base_dir.parent / \
                     f"{base_dir.name}.private" / torrent["scheme"] / netloc
-            dest = dest_dir / \
-                (torrent["name"] if torrent["name"] else src.name)
+            dest = dest_dir / (f"{torrent['name']}.torrent"
+                               if torrent["name"] else f"{src.name}.torrent")
 
             if not dest_dir.is_dir():
                 if dry_run:
@@ -108,7 +108,8 @@ def main():
     skipped_files = relocate_torrents(
         args.base_dir, public=args.public, dry_run=args.dry_run)
 
-    logger.warning(json.dumps(skipped_files, ensure_ascii=False))
+    logger.warning(
+        f"skipped_files = {json.dumps(skipped_files, indent=4, ensure_ascii=False)}")
 
 
 if __name__ == "__main__":

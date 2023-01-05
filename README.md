@@ -48,12 +48,23 @@ cookies 有效期相当长, 而验证码处理起来会麻烦些, 这里就先�
 
 ## [torrent-relocate](p2p_tools/torrent_relocate.py)
 
-用于对某个目录下的 .torrent 文件分类,
+用于对提供的 `--base-dir` 目录下的 .torrent 文件分类整理,
 
-* 对 public tracker 的种子按 `announce scheme` 分组
-* 对 private tracker 的种子移动到另一个目录(`${base_dir}.pt`), 并按 `announce scheme`/`announce netloc` 分组
+* 对 public tracker 的种子移动到另一个目录, `dest_dir = f"{base_dir}.public/{scheme}"`
+* 对 private tracker 的种子移动到另一个目录: `dest_dir = f"{base_dir}.private/{scheme}/{netloc}"`
+* 分组的同时, 将 .torrent 文件名重命名为 `f"{torrent[b'info'][b'name']}".torrent`
+
+因为取了 .torrent 文件内的 `name` 字段作为文件名, 在一定程度上可保证目标目录文件的唯一性,
+当然也可能存在 `name` 字段重名时, 检测到目标文件存在时而被跳过的文件.
 
 使用 `--help` 选项查看帮助信息: `torrent-relocate --help`
+
+## [bencode-info](p2p_tools/bencode_info.py)
+
+读入 bencode 编码的文件, 如 .torrent 或 .fastresume 文件,
+剔除掉一些在终端不可打印的 bytes 字段(如 `pieces`)后, 将结果打印在终端方便 debug 文件信息.
+
+使用 `--help` 选项查看帮助信息: `bencode-info --help`
 
 ## See Also
 
