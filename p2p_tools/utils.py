@@ -76,15 +76,16 @@ def read_torrent(torrent: Path):
     torrent_dict = bencode_bread(torrent)
 
     torrent_name = ""
-    try:
-        torrent_name = torrent_dict[b"info"].get(b"name", b"").decode()
-    except UnicodeDecodeError:
-        # 不知道有些种子中 name.utf-8 这个 key 是否符合 spec, 还是说是某些 client 的私有行为?
-        torrent_name = torrent_dict[b"info"].get(b"name.utf-8", b"").decode()
-        # 如果没有 "name.utf-8" 字段, 则不对 name 进行 .decode()
-        # 那么这里可能出现不知道怎么解码的 bytes, 几率很小
-        if not torrent_name:
-            torrent_name = torrent_dict[b"info"].get(b"name", b"")
+    if torrent_dict:
+        try:
+            torrent_name = torrent_dict[b"info"].get(b"name", b"").decode()
+        except UnicodeDecodeError:
+            # 不知道有些种子中 name.utf-8 这个 key 是否符合 spec, 还是说是某些 client 的私有行为?
+            torrent_name = torrent_dict[b"info"].get(b"name.utf-8", b"").decode()
+            # 如果没有 "name.utf-8" 字段, 则不对 name 进行 .decode()
+            # 那么这里可能出现不知道怎么解码的 bytes, 几率很小
+            if not torrent_name:
+                torrent_name = torrent_dict[b"info"].get(b"name", b"")
 
     return torrent_name, torrent_dict
 
