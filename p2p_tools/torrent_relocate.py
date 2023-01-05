@@ -19,7 +19,7 @@ def init_logger(name, level=logging.WARNING):
     return logging.getLogger(name)
 
 
-logger = init_logger("p2p_tools.torrent_helper", logging.INFO)
+logger = init_logger("p2p_tools.torrent_relocate", logging.INFO)
 
 
 def find_torrents(base_dir: Path, public: bool):
