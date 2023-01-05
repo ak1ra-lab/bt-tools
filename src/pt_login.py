@@ -9,8 +9,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
-from playwright.sync_api import sync_playwright
-from cf_clearance import sync_cf_retry, sync_stealth
 
 
 def init_logger(name, level=logging.WARNING):
@@ -40,64 +38,26 @@ def get_cookie_by_name(cookies, name):
             return cookie.get("value")
 
 
-def takelogin_playwright(site_config):
-    url_parsed = urlparse(site_config["url"])
-    url_login = f"{url_parsed.scheme}://{url_parsed.netloc}{site_config['login']}"
-    url_takelogin = f"{url_parsed.scheme}://{url_parsed.netloc}{site_config['takelogin']}"
-    credentials = site_config["credentials"]
-
-    # 先访问 /login.php 拿到 cf_clearance cookies 和 user-agent header
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        sync_stealth(page, pure=True)
-        page.goto(url_login)
-        response = sync_cf_retry(page)
-        if response:
-            cf_clearance_value = get_cookie_by_name(
-                page.context.cookies(), "cf_clearance")
-            logger.debug(f"cf_clearance_value = {cf_clearance_value}")
-            user_agent = page.evaluate('() => {return navigator.userAgent}')
-            logger.debug(f"user_agent = {user_agent}")
-        else:
-            logger.warning(f"{url_login} cf challenge fail")
-        browser.close()
-
-    # 带上上面的值再访问 /takelogin.php 拿到 tp cookies
-    cookies = {"cf_clearance": cf_clearance_value}
-    headers = {"user-agent": user_agent, "referer": url_login}
-    try:
-        logger.debug(f"httpx.post('{url_takelogin}', data={credentials})")
-        response = httpx.post(url_takelogin, data=credentials,
-                              cookies=cookies, headers=headers)
-    except httpx.HTTPError as exc:
-        logger.warning(f"HTTP Exception for {exc.request.url} - {exc}")
-
-    cookies = {"tp": ""}
-    headers.update({"referer": url_takelogin})
-    if response.is_success or response.is_redirect:
-        cookies.update({"tp": get_cookie_by_name(response.cookies, "tp")})
-
-    return cookies, headers
-
-
-def takelogin(site_config, cookies, headers):
+def takelogin(site_config, cookies, headers, retry_count=3):
     url_parsed = urlparse(site_config["url"])
     url_takelogin = f"{url_parsed.scheme}://{url_parsed.netloc}{site_config['takelogin']}"
     credentials = site_config["credentials"]
 
-    try:
-        logger.debug(f"httpx.post('{url_takelogin}', data={credentials})")
-        response = httpx.post(url_takelogin, data=credentials,
-                              cookies=cookies, headers=headers)
-    except httpx.HTTPError as exc:
-        logger.warning(f"HTTP Exception for {exc.request.url} - {exc}")
+    for _ in range(retry_count):
+        try:
+            logger.debug(f"httpx.post('{url_takelogin}', data={credentials})")
+            response = httpx.post(url_takelogin, data=credentials,
+                                cookies=cookies, headers=headers)
+        except httpx.HTTPError as exc:
+            logger.warning(f"HTTP Exception for {exc.request.url} - {exc}")
+            continue
 
-    cookies = {"tp": ""}
-    if response.is_success or response.is_redirect:
-        logger.debug(
-            f"response = {response}, location = {response.headers.get('location')}")
-        cookies.update({"tp": get_cookie_by_name(response.cookies, "tp")})
+        cookies = {}
+        if response.is_success or response.is_redirect:
+            logger.debug(
+                f"response = {response}, location = {response.headers.get('location')}")
+            cookies.update({"tp": get_cookie_by_name(response.cookies, "tp")})
+            break
 
     return cookies, headers
 
@@ -126,22 +86,25 @@ def pt_request(site_config, headers, args):
             logger.debug(
                 f"response = {response}, location = {response.headers.get('location')}")
 
-            cookies.update({"cf_clearance": get_cookie_by_name(
-                response.cookies, "cf_clearance")})
-            cookies, _ = takelogin(site_config, cookies=cookies, headers=headers)
-            # cookies, _ = takelogin_playwright(site_config)
-            logger.debug(f"takelogin cookies = {cookies}")
+            cookies_takelogin = {}
+            cf_clearance_value = get_cookie_by_name(response.cookies, "cf_clearance")
+            if cf_clearance_value:
+                logger.debug(f"response = {response}, cf_clearance = {cf_clearance_value}")
+                cookies_takelogin.update({"cf_clearance": cf_clearance_value})
+
+            cookies, _ = takelogin(site_config, cookies=cookies_takelogin,
+                headers=headers, retry_count=args.retry_count)
+            logger.debug(f"takelogin returned cookies = {cookies}")
 
             if cookies.get("tp"):
                 # 把重新获取的 cookies 写入配置文件 pt-login.json 中
                 with open(config.expanduser(), "r") as fp:
                     config_contents = json.loads(fp.read())
-                config_contents["sites"][urlparse(
-                    url).netloc]["cookies"].update(cookies)
+                config_contents["sites"][urlparse(url).netloc]["cookies"].update(cookies)
                 with open(config.expanduser(), "w") as fp:
-                    fp.write(json.dumps(config_contents,
-                             indent=4, ensure_ascii=False))
+                    fp.write(json.dumps(config_contents, indent=4, ensure_ascii=False))
             else:
+                logger.warning(f"response = {response} takelogin failed")
                 break
 
     return responses
@@ -169,7 +132,8 @@ def main():
     chat_id = config_contents["chat_id"]
     bot_token = config_contents["bot_token"]
     headers = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
+        "user-agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
     }
 
     messages = [f"<b>{datetime.now().isoformat()}</b>\n"]

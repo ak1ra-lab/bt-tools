@@ -1,5 +1,3 @@
 qbittorrent-api
 bencode.py
 httpx
-pytest-playwright
-cf-clearance
