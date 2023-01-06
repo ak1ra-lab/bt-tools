@@ -18,7 +18,7 @@ logger = init_logger("p2p_tools.torrent_filename_restore", logging.INFO)
 
 def match_torrent_files(torrent: Path, base_dir: Path):
     torrent_name, torrent_dict = read_torrent(torrent)
-    _, torrent_files = get_torrent_files(torrent_name, torrent_dict)
+    torrent_files = get_torrent_files(torrent_name, torrent_dict)
 
     for root, _, files in os.walk(base_dir):
         root = root if isinstance(root, Path) else Path(root)

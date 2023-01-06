@@ -18,7 +18,7 @@ logger = init_logger("p2p_tools.torrent_info", logging.INFO)
 
 def dump_torrent_info(torrent: Path):
     torrent_name, torrent_dict = read_torrent(torrent)
-    _, torrent_files = get_torrent_files(torrent_name, torrent_dict)
+    torrent_files = get_torrent_files(torrent_name, torrent_dict)
 
     # pop large object
     torrent_dict["info"].pop("pieces")
