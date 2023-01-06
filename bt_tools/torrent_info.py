@@ -5,7 +5,7 @@ import json
 import logging
 from pathlib import Path
 
-from p2p_tools.utils import (
+from bt_tools.utils import (
     init_logger,
     bencode_read,
     read_torrent,
@@ -13,7 +13,7 @@ from p2p_tools.utils import (
 )
 
 
-logger = init_logger("p2p_tools.torrent_info", logging.INFO)
+logger = init_logger("bt_tools.torrent_info", logging.INFO)
 
 
 def dump_torrent_info(torrent: Path):

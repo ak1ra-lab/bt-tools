@@ -1,11 +1,11 @@
 
-# p2p-tools
+# bt-tools
 
 ## Install
 
 ```
-git clone https://github.com/ak1ra-lab/p2p-tools.git
-cd p2p-tools
+git clone https://github.com/ak1ra-lab/bt-tools.git
+cd bt-tools
 python3 -m venv .venv
 source .venv/bin/activate
 pip3 install .
@@ -13,13 +13,13 @@ pip3 install .
 
 > 作为"不成器"的工具, 就不打算打包上传 PyPI 了
 
-## [pt-login](p2p_tools/pt_login.py)
+## [pt-login](bt_tools/pt_login.py)
 
 由于各大 PT 站点都有特定期限内通过网页访问网站的要求,
 故编写此脚本用于自动登录, 并将请求结果通过 Telegram bot 发送到自定义频道或群组中.
 
-* `mkdir -p ~/.config/p2p-tools && cp pt_login.json ~/.config/p2p-tools/`
-* 编辑 `~/.config/p2p-tools/pt_login.json` 文件, 修改其中 `bot_token`, `chat_id`, 和各个 PT 站的 `cookies` 值
+* `mkdir -p ~/.config/bt-tools && cp pt-login.json ~/.config/bt-tools/`
+* 编辑 `~/.config/bt-tools/pt-login.json` 文件, 修改其中 `bot_token`, `chat_id`, 和各个 PT 站的 `cookies` 值
     * Telegram `bot_token` 可通过 [@BotFather](https://t.me/BotFather) 创建,
         * 创建 bot 后需添加到对应的 频道/群组 中, 添加到频道中需要 bot 为频道管理员, 权限允许消息发送即可
     * Telegram `chat_id` 可以是频道或群组, 公开 频道/群组 可直接使用其带 `@` 的 username,
@@ -27,7 +27,7 @@ pip3 install .
         * 如消息 `https://t.me/c/1234567890/114514` 的 `chat_id` 为 `-1001234567890`
     * 如果示例配置文件中存在用户没有账号的站点, 可将相关站点整组配置删除
 * 前面执行过 `source .venv/bin/activate` 的话, 配置好后可直接执行 `pt-login` 命令测试登录
-* 添加定时任务需要指定 `.venv/bin/pt-login` 目录的绝对路径, 如 `5 0 * * * /path/to/p2p-tools/.venv/bin/pt-login`
+* 添加定时任务需要指定 `.venv/bin/pt-login` 目录的绝对路径, 如 `5 0 * * * /path/to/bt-tools/.venv/bin/pt-login`
 
 对于 [M-Team](https://kp.m-team.cc), 幸好这个站点没有登录验证码, 因此可以在 cookies 失效时通过用户名和密码请求
 `/takelogin.php` 获取新的 cookies 并更新到配置文件中, 因此需要在配置文件中填入 M-Team 的 `username` 和 `password`.
@@ -37,7 +37,7 @@ cookies 有效期相当长, 而验证码处理起来会麻烦些, 这里就先�
 
 使用 `--help` 选项查看帮助信息: `pt-login --help`
 
-## [torrent-filename-restore](p2p_tools/torrent_filename_restore.py)
+## [torrent-filename-restore](bt_tools/torrent_filename_restore.py)
 
 用于实现一个非常"小众"的需求, 对某个文件名被改乱的 Torrent 任务保存目录, 将其中的文件名还原为 .torrent 文件中结构.
 
@@ -46,7 +46,7 @@ cookies 有效期相当长, 而验证码处理起来会麻烦些, 这里就先�
 
 使用 `--help` 选项查看帮助信息: `torrent-filename-restore --help`
 
-## [torrent-relocate](p2p_tools/torrent_relocate.py)
+## [torrent-relocate](bt_tools/torrent_relocate.py)
 
 用于对提供的 `--base-dir` 目录下的 .torrent 文件分类整理,
 
@@ -59,7 +59,7 @@ cookies 有效期相当长, 而验证码处理起来会麻烦些, 这里就先�
 
 使用 `--help` 选项查看帮助信息: `torrent-relocate --help`
 
-## [torrent-info](p2p_tools/torrent_info.py)
+## [torrent-info](bt_tools/torrent_info.py)
 
 读入 bencode 编码的文件, 如 .torrent 或 .fastresume 文件,
 剔除掉一些在终端不可打印的 bytes 字段(如 `pieces`)后, 将结果打印在终端方便 debug 文件信息.

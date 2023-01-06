@@ -8,13 +8,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
-from p2p_tools.utils import (
+from bt_tools.utils import (
     init_logger,
     bot_send_message
 )
 
 
-logger = init_logger("p2p_tools.pt_login", logging.DEBUG)
+logger = init_logger("bt_tools.pt_login", logging.DEBUG)
 
 
 def get_cookie_by_name(cookies, name):
@@ -102,7 +102,7 @@ def pt_request(site_config, headers, args):
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    config_default = Path("~/.config/p2p-tools/pt_login.json")
+    config_default = Path("~/.config/bt-tools/pt-login.json")
     parser.add_argument("-c", "--config", default=config_default,
                         help="pt-login config to read, default: %(default)s")
     parser.add_argument("-r", "--retry-count", default=3,

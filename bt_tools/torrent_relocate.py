@@ -7,13 +7,13 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-from p2p_tools.utils import (
+from bt_tools.utils import (
     init_logger,
     read_torrent
 )
 
 
-logger = init_logger("p2p_tools.torrent_relocate", logging.INFO)
+logger = init_logger("bt_tools.torrent_relocate", logging.INFO)
 
 
 def find_torrents(base_dir: Path, public: bool):

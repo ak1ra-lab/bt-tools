@@ -6,14 +6,14 @@ import json
 import logging
 from pathlib import Path
 
-from p2p_tools.utils import (
+from bt_tools.utils import (
     init_logger,
     read_torrent,
     get_torrent_files
 )
 
 
-logger = init_logger("p2p_tools.torrent_filename_restore", logging.INFO)
+logger = init_logger("bt_tools.torrent_filename_restore", logging.INFO)
 
 
 def match_torrent_files(torrent: Path, base_dir: Path):

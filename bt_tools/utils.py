@@ -17,7 +17,7 @@ def init_logger(name, level=logging.WARNING):
     return logging.getLogger(name)
 
 
-logger = init_logger("p2p_tools.utils", logging.INFO)
+logger = init_logger("bt_tools.utils", logging.INFO)
 
 
 def bot_send_message(bot_token, chat_id, message):
