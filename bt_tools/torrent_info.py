@@ -27,11 +27,11 @@ def dump_torrent_info(torrent: Path):
     except KeyError:
         pass
 
-    logger.info(f"torrent_name = {torrent_name}, "
-                f"torrent_files = \n{json.dumps(torrent_files, indent=4, ensure_ascii=False)}")
-
+    logger.info(f"torrent = {torrent}, torrent_name = {torrent_name}")
     for key, value in torrent_dict.items():
-        logger.info(f"{key} = {value}")
+        logger.info(f"\t{key} = {value}")
+
+    logger.info(f"\ttorrent_files = \n{json.dumps(torrent_files, indent=4, ensure_ascii=False)}")
 
 
 def dump_fastresume(fastresume: Path):
@@ -40,8 +40,9 @@ def dump_fastresume(fastresume: Path):
     # pop large object
     fastresume_dict.pop("pieces")
 
+    logger.info(f"fastresume = {fastresume}")
     for key, value in fastresume_dict.items():
-        logger.info(f"{key} = {value}")
+        logger.info(f"\t{key} = {value}")
 
 
 def parse_args():
