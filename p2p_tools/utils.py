@@ -31,34 +31,59 @@ def bot_send_message(bot_token, chat_id, message):
     httpx.post(url, data=data)
 
 
-def joinpath(path: list):
-    return os.path.sep.join([p.decode() for p in path])
+def decode(item, encoding="utf-8"):
+    try:
+        return item.decode(encoding)
+    except UnicodeDecodeError as e:
+        logger.debug(f"UnicodeDecodeError: {e}")
+        return item
 
 
-def bytes_dict_decode(bytes_dict: dict, encoding="utf-8", errors="ignore"):
-    dict_decoded = {}
+def bytes_list_decode(bytes_list: list, encoding="utf-8"):
+    decoded_list = []
+    for item in bytes_list:
+        if isinstance(item, list):
+            decoded_list.append(bytes_list_decode(item, encoding))
+        elif isinstance(item, dict):
+            decoded_list.append(bytes_dict_decode(item, encoding))
+        elif isinstance(item, bytes):
+            decoded_list.append(decode(item))
+        else:
+            decoded_list.append(item)
+
+    return decoded_list
+
+
+def bytes_dict_decode(bytes_dict: dict, encoding="utf-8"):
+    decoded_dict = {}
     for key, value in bytes_dict.items():
-        if isinstance(key, bytes):
-            key_decoded = key.decode(encoding, errors)
-        else:
-            key_decoded = key
+        key_decoded = decode(key) if isinstance(key, bytes) else key
 
-        if isinstance(value, dict):
-            value_decoded = bytes_dict_decode(value)
-        elif isinstance(value, list):
-            value_decoded = [
-                v.decode(encoding, errors) if isinstance(v, bytes) else v for v in value]
+        if isinstance(value, list):
+            decoded_dict.update({key_decoded: bytes_list_decode(value)})
+        elif isinstance(value, dict):
+            decoded_dict.update({key_decoded: bytes_dict_decode(value)})
         elif isinstance(value, bytes):
-            value_decoded = value.decode(encoding, errors)
+            decoded_dict.update({key_decoded: decode(value)})
         else:
-            value_decoded = value
+            decoded_dict.update({key_decoded: value})
 
-        dict_decoded.update({key_decoded: value_decoded})
-
-    return dict_decoded
+    return decoded_dict
 
 
-def bencode_bread(bencode_file: Path):
+def bytes_obj_decode(bytes_obj, encoding="utf-8"):
+    if isinstance(bytes_obj, list):
+        return bytes_list_decode(bytes_obj, encoding)
+    elif isinstance(bytes_obj, dict):
+        return bytes_dict_decode(bytes_obj, encoding)
+    elif isinstance(bytes_obj, bytes):
+        return decode(bytes_obj, encoding)
+    else:
+        return bytes_obj
+
+
+def bencode_read(bencode_file: Path):
+    # read and decode all the items
     bencode_file = bencode_file \
         if isinstance(bencode_file, Path) else Path(bencode_file)
     bencode_dict = {}
@@ -66,26 +91,25 @@ def bencode_bread(bencode_file: Path):
     try:
         bencode_dict = bencodepy.bread(bencode_file)
     except BencodeDecodeError as exc:
-        logger.warning(f"bencode_file = {bencode_file} - {exc}")
+        logger.warning(f"bencode_file = {bencode_file}, {exc}")
 
-    return bencode_dict
+    return bytes_dict_decode(bencode_dict)
 
 
 def read_torrent(torrent: Path):
     torrent = torrent if isinstance(torrent, Path) else Path(torrent)
-    torrent_dict = bencode_bread(torrent)
 
     torrent_name = ""
+    torrent_dict = bencode_read(torrent)
     if torrent_dict:
-        try:
-            torrent_name = torrent_dict[b"info"].get(b"name", b"").decode()
-        except UnicodeDecodeError:
-            # 不知道有些种子中 name.utf-8 这个 key 是否符合 spec, 还是说是某些 client 的私有行为?
-            torrent_name = torrent_dict[b"info"].get(b"name.utf-8", b"").decode()
-            # 如果没有 "name.utf-8" 字段, 则不对 name 进行 .decode()
-            # 那么这里可能出现不知道怎么解码的 bytes, 几率很小
-            if not torrent_name:
-                torrent_name = torrent_dict[b"info"].get(b"name", b"")
+        torrent_name = torrent_dict["info"].get("name")
+        # 如果 bencode_read 中 decode() name 字段失败, decode() 函数按原样返回 bytes,
+        # 这时尝试读取另外一个"非标准"的 name.utf-8 字段, 这边如果真的是 utf-8 则肯定能 decode 成功,
+        # 其实也可以使用另一种 encoding 来 decode(), 不过这样要猜测编码方式或者枚举几种常见的 encoding,
+        # name.utf-8 字段不存在的情况下, torrent_name 返回值仍然有可能是 bytes, 那该怎么办呢?
+        if isinstance(torrent_name, bytes):
+            torrent_name = torrent_dict["info"].get("name.utf-8") \
+                if torrent_dict["info"].get("name.utf-8") else torrent_dict["info"].get("name")
 
     return torrent_name, torrent_dict
 
@@ -93,15 +117,13 @@ def read_torrent(torrent: Path):
 def get_torrent_files(torrent_name, torrent_dict):
     torrent_files = []
 
-    # 对于单文件 .torrent, 不存在 b"files" 字段
-    if not torrent_dict[b"info"].get(b"files"):
+    # 对于单文件 .torrent, 不存在 "files" 字段
+    if not torrent_dict["info"].get("files"):
         torrent_files.append(
-            {"length": torrent_dict[b"info"][b"length"], "path": torrent_name}
-        )
+            {"length": torrent_dict["info"]["length"], "path": torrent_name})
     else:
-        for file in torrent_dict[b"info"].pop(b"files"):
+        for file in torrent_dict["info"].get("files"):
             torrent_files.append(
-                {"length": file[b"length"], "path": joinpath(file[b"path"])}
-            )
+                {"length": file["length"], "path": os.path.sep.join(file["path"])})
 
     return torrent_name, torrent_files

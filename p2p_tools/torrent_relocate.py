@@ -29,14 +29,14 @@ def find_torrents(base_dir: Path, public: bool):
             if not torrent_dict:
                 continue
 
-            announce = torrent_dict.get(b"announce", b"").decode()
+            announce = torrent_dict.get("announce", "")
             logger.debug(f"file = {file}, announce = {announce}")
             if not announce:
                 logger.warning(f"file = {file} announce empty, skip...")
                 continue
 
             torrent_type = "private" \
-                if torrent_dict[b"info"].get(b"private", 0) else "public"
+                if torrent_dict["info"].get("private", 0) else "public"
             netloc = urlparse(announce).netloc.split(":")[0]
             if not netloc in torrents_grouped[torrent_type].keys():
                 torrents_grouped[torrent_type][netloc] = []

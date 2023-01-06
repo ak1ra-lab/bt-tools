@@ -59,12 +59,12 @@ cookies 有效期相当长, 而验证码处理起来会麻烦些, 这里就先�
 
 使用 `--help` 选项查看帮助信息: `torrent-relocate --help`
 
-## [bencode-info](p2p_tools/bencode_info.py)
+## [torrent-info](p2p_tools/torrent_info.py)
 
 读入 bencode 编码的文件, 如 .torrent 或 .fastresume 文件,
 剔除掉一些在终端不可打印的 bytes 字段(如 `pieces`)后, 将结果打印在终端方便 debug 文件信息.
 
-使用 `--help` 选项查看帮助信息: `bencode-info --help`
+使用 `--help` 选项查看帮助信息: `torrent-info --help`
 
 ## See Also
 

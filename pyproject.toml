@@ -55,7 +55,7 @@ Source = "https://github.com/ak1ra-lab/p2p-tools"
 pt-login = "p2p_tools.pt_login:main"
 torrent-filename-restore = "p2p_tools.torrent_filename_restore:main"
 torrent-relocate = "p2p_tools.torrent_relocate:main"
-bencode-info = "p2p_tools.bencode_info:main"
+torrent-info = "p2p_tools.torrent_info:main"
 
 [tool.black]
 line-length = 120
